@@ -1,5 +1,5 @@
 
-import React, { createContext, useState, ReactNode, useEffect } from 'react';
+import React, { createContext, useState, ReactNode, useEffect, useRef } from 'react';
 import { User, SubscriptionTier, UserProject } from '../types';
 import { DEMO_ACCOUNTS, DAILY_POINT_ALLOWANCE } from '../constants';
 import toast from 'react-hot-toast';
@@ -9,7 +9,10 @@ interface AuthContextType {
   allUsers: User[];
   login: (tier: SubscriptionTier) => void;
   logout: () => void;
+  signUp: (name: string, email: string) => boolean;
+  createUser: (newUser: Omit<User, 'projects' | 'memberSince' | 'avatarInitial'>) => boolean;
   updateUser: (updatedUser: User) => void;
+  deleteUser: (email: string) => void;
   addUserProject: (project: UserProject) => void;
   isAdmin: boolean;
   adminLogin: (password: string) => boolean;
@@ -26,7 +29,7 @@ interface AuthProviderProps {
 const ADMIN_PASSWORD_KEY = "smt-admin-password";
 const ADMIN_SESSION_KEY = "smt-admin-session";
 const ALL_USERS_STORAGE_KEY = "smt-all-users-data";
-const ALL_PROJECTS_STORAGE_KEY = "smt-all-projects-data"; // New key for projects
+const ALL_PROJECTS_STORAGE_KEY = "smt-all-projects-data";
 const CURRENT_USER_EMAIL_KEY = "smt-current-user-email";
 
 const getInitialUsers = (): User[] => {
@@ -37,7 +40,6 @@ const getInitialUsers = (): User[] => {
 
         if (storedUsersData) {
             const users: Omit<User, 'projects'>[] = JSON.parse(storedUsersData);
-            // Combine user data with their projects from separate storage
             return users.map(u => ({
                 ...u,
                 projects: allProjects[u.email] || [],
@@ -46,7 +48,6 @@ const getInitialUsers = (): User[] => {
     } catch (error) {
         console.error("Failed to parse data from localStorage", error);
     }
-    // Fallback to initial constants if nothing is stored or on error
     return Object.values(DEMO_ACCOUNTS);
 };
 
@@ -55,6 +56,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
   const [adminPassword, setAdminPassword] = useState<string>('password');
+  const demoTimerRef = useRef<number | null>(null);
 
   const updateUser = (updatedUser: User) => {
     const newAllUsers = allUsers.map(u => u.email === updatedUser.email ? updatedUser : u);
@@ -74,13 +76,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
               lastLogin: today 
           };
           updateUser(updatedUser);
-          toast.success(`+${pointsToAdd} daily SMT Points!`);
+          if (pointsToAdd > 0) {
+              toast.success(`+${pointsToAdd} daily SMT Points!`);
+          }
           return updatedUser;
       }
       return targetUser;
   };
 
-  // Effect to rehydrate current user and grant daily points on page load
   useEffect(() => {
     const currentUserEmail = sessionStorage.getItem(CURRENT_USER_EMAIL_KEY);
     if(currentUserEmail) {
@@ -90,16 +93,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
            setUser(finalUser);
         }
     }
-  }, []); // Run only once on initial load
+  }, []);
 
-  // Effect to persist all users data whenever it changes, separating projects
   useEffect(() => {
     try {
-        // Persist user data without projects to avoid quota issues
         const usersToPersist = allUsers.map(({ projects, ...rest }) => rest);
         localStorage.setItem(ALL_USERS_STORAGE_KEY, JSON.stringify(usersToPersist));
 
-        // Persist all projects in a separate key, mapping email to projects
         const projectsToPersist = allUsers.reduce((acc, currentUser) => {
             if (currentUser.projects && currentUser.projects.length > 0) {
                 acc[currentUser.email] = currentUser.projects;
@@ -116,7 +116,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   }, [allUsers]);
 
-  // Effect for admin session and password
   useEffect(() => {
     const activeSession = sessionStorage.getItem(ADMIN_SESSION_KEY);
     if (activeSession === 'true') {
@@ -129,18 +128,78 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, []);
 
   const login = (tier: SubscriptionTier) => {
-    let targetUser = allUsers.find(u => u.tier === tier);
+    let targetUser = allUsers.find(u => u.tier === tier && u.email.endsWith('@demo.com'));
     if (!targetUser) return;
     
     const finalUser = processDailyPoints(targetUser);
     setUser(finalUser);
     sessionStorage.setItem(CURRENT_USER_EMAIL_KEY, finalUser.email);
+    
+    if (finalUser.email.endsWith('@demo.com')) {
+        if(demoTimerRef.current) clearTimeout(demoTimerRef.current);
+        demoTimerRef.current = window.setTimeout(() => {
+            logout();
+            toast.success("Your 5-minute demo session has ended. Please sign up for a full experience!");
+        }, 5 * 60 * 1000); // 5 minutes
+    }
   };
 
   const logout = () => {
+    if (demoTimerRef.current) {
+        clearTimeout(demoTimerRef.current);
+        demoTimerRef.current = null;
+    }
     setUser(null);
     sessionStorage.removeItem(CURRENT_USER_EMAIL_KEY);
   };
+  
+  const signUp = (name: string, email: string): boolean => {
+      if (allUsers.some(u => u.email.toLowerCase() === email.toLowerCase())) {
+          toast.error("An account with this email already exists.");
+          return false;
+      }
+      
+      const newUser: User = {
+          name,
+          email,
+          avatarInitial: name.charAt(0).toUpperCase(),
+          tier: SubscriptionTier.FREE,
+          points: 100,
+          memberSince: new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
+          lastLogin: '',
+          projects: []
+      };
+      
+      setAllUsers(prev => [...prev, newUser]);
+      const finalUser = processDailyPoints(newUser);
+      setUser(finalUser);
+      sessionStorage.setItem(CURRENT_USER_EMAIL_KEY, finalUser.email);
+      return true;
+  };
+  
+  const createUser = (newUser: Omit<User, 'projects' | 'memberSince' | 'avatarInitial'>): boolean => {
+      if (allUsers.some(u => u.email.toLowerCase() === newUser.email.toLowerCase())) {
+          toast.error("An account with this email already exists.");
+          return false;
+      }
+      
+      const userToAdd: User = {
+          ...newUser,
+          avatarInitial: newUser.name.charAt(0).toUpperCase(),
+          memberSince: new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
+          projects: [],
+      };
+      setAllUsers(prev => [...prev, userToAdd]);
+      return true;
+  }
+
+  const deleteUser = (email: string) => {
+      if (user?.email === email) {
+          logout();
+      }
+      setAllUsers(prev => prev.filter(u => u.email !== email));
+  };
+
 
   const addUserProject = (project: UserProject) => {
     if (!user) {
@@ -179,7 +238,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }
 
   return (
-    <AuthContext.Provider value={{ user, allUsers, login, logout, updateUser, addUserProject, isAdmin, adminLogin, adminLogout, changeAdminPassword }}>
+    <AuthContext.Provider value={{ user, allUsers, login, logout, signUp, createUser, updateUser, deleteUser, addUserProject, isAdmin, adminLogin, adminLogout, changeAdminPassword }}>
       {children}
     </AuthContext.Provider>
   );

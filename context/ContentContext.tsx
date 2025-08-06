@@ -1,12 +1,12 @@
 
 import React, { createContext, useState, ReactNode, useEffect, useMemo } from 'react';
-import { Artist, NewsArticle, DisplayTrack, GalleryImage, PageID, StudioSubmission, SubmissionStatus, ConstellationItem, Release, Track, SpotlightItem, Playlist, CurrentlyPlayingTrack, Asset, TeoApp, FriendArtist, PlaylistCategory, SmtVideo, StudioActionCosts, ApiKeys } from '../types';
+import { Artist, NewsArticle, DisplayTrack, GalleryImage, PageID, StudioSubmission, SubmissionStatus, ConstellationItem, Release, Track, SpotlightItem, Playlist, CurrentlyPlayingTrack, Asset, TeoApp, FriendArtist, PlaylistCategory, SmtVideo, StudioActionCosts, ApiKeys, FooterContent } from '../types';
 import { 
   COAI_ARTISTS, LATEST_NEWS, FEATURED_VIDEO_URLS, GALLERY_IMAGES, 
   STATIC_PAGE_CONTENT, STUDIO_SUBMISSIONS, CONSTELLATION_ITEMS, SPOTLIGHT_ITEMS, 
   PLAYLISTS, ASSET_VAULT, TRENDING_TRACK_IDS_DEFAULT, FEATURED_TRACK_URL_DEFAULT,
   TEO_APPS, FRIEND_ARTISTS, SMT_VIDEOS, PORTAL_URL_DEFAULT, DEFAULT_STUDIO_COSTS,
-  DEFAULT_API_KEYS
+  DEFAULT_API_KEYS, DEFAULT_FOOTER_CONTENT
 } from '../constants';
 import toast from 'react-hot-toast';
 
@@ -30,6 +30,7 @@ interface PersistedState {
   portalUrl: string;
   studioCosts: StudioActionCosts;
   apiKeys: ApiKeys;
+  footerContent: FooterContent;
 }
 
 // Define the shape of the state that is NOT persisted (volatile)
@@ -90,6 +91,7 @@ interface ContentContextType extends ContentState {
   updatePortalUrl: (newUrl: string) => void;
   updateStudioCosts: (newCosts: StudioActionCosts) => void;
   updateApiKeys: (keys: ApiKeys) => void;
+  updateFooterContent: (newContent: FooterContent) => void;
 }
 
 export const ContentContext = createContext<ContentContextType | undefined>(undefined);
@@ -98,7 +100,7 @@ interface ContentProviderProps {
   children: ReactNode;
 }
 
-const CONTENT_STORAGE_KEY = 'smt-content-data-v11'; // Version incremented for api keys
+const CONTENT_STORAGE_KEY = 'smt-content-data-v12'; // Version incremented for footer
 
 // Function to get initial PERSISTED state from localStorage or constants
 const getInitialPersistedState = (): PersistedState => {
@@ -107,7 +109,7 @@ const getInitialPersistedState = (): PersistedState => {
         if (storedContent) {
             const parsed = JSON.parse(storedContent);
             // Check for essential persisted properties to ensure data validity
-            if (parsed.artists && parsed.pageContents && parsed.teoApps && parsed.heroBackgroundImage && parsed.smtVideos && parsed.portalUrl && parsed.studioCosts && parsed.apiKeys) {
+            if (parsed.artists && parsed.pageContents && parsed.footerContent) {
                return parsed;
             }
         }
@@ -134,6 +136,7 @@ const getInitialPersistedState = (): PersistedState => {
         portalUrl: PORTAL_URL_DEFAULT,
         studioCosts: DEFAULT_STUDIO_COSTS,
         apiKeys: DEFAULT_API_KEYS,
+        footerContent: DEFAULT_FOOTER_CONTENT,
     };
 };
 
@@ -439,6 +442,10 @@ export const ContentProvider: React.FC<ContentProviderProps> = ({ children }) =>
       setState(prevState => ({ ...prevState, apiKeys: keys }));
   };
 
+  const updateFooterContent = (newContent: FooterContent) => {
+      setState(prevState => ({ ...prevState, footerContent: newContent }));
+  };
+
   return (
     <ContentContext.Provider value={{ 
         ...state,
@@ -490,6 +497,7 @@ export const ContentProvider: React.FC<ContentProviderProps> = ({ children }) =>
         updatePortalUrl,
         updateStudioCosts,
         updateApiKeys,
+        updateFooterContent,
     }}>
       {children}
     </ContentContext.Provider>

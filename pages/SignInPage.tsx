@@ -1,8 +1,10 @@
+
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { SubscriptionTier } from '../types';
 import { ArrowRightIcon, GoogleIcon, AppleIcon, FacebookIcon } from '../components/icons';
+import toast from 'react-hot-toast';
 
 const SignInPage: React.FC = () => {
   const [email, setEmail] = useState('tecadmin');
@@ -18,14 +20,18 @@ const SignInPage: React.FC = () => {
 
   const handleSignIn = (e: React.FormEvent) => {
     e.preventDefault();
-    // In a real app, you'd validate credentials.
-    // Here we'll just log in as VIP if the default creds are used.
     if (email === 'tecadmin' && password === 'password') {
         handleDemoLogin(SubscriptionTier.VIP);
     } else {
         alert('Invalid credentials for demo sign in. Please use a demo account button.');
     }
   };
+  
+  const handleSocialLoginClick = () => {
+      toast.success("Social login is for demonstration purposes. Please use a demo account or sign up.", {
+          duration: 4000,
+      });
+  }
 
   const DemoButton: React.FC<{ tier: SubscriptionTier; label: string; className: string }> = ({ tier, label, className }) => (
     <button
@@ -99,17 +105,17 @@ const SignInPage: React.FC = () => {
              <SocialButton 
                 icon={<GoogleIcon className="w-5 h-5" />} 
                 label="Google" 
-                onClick={() => handleDemoLogin(SubscriptionTier.PREMIUM)}
+                onClick={handleSocialLoginClick}
             />
             <SocialButton 
                 icon={<AppleIcon className="w-5 h-5" />} 
                 label="Apple" 
-                onClick={() => handleDemoLogin(SubscriptionTier.PREMIUM)}
+                onClick={handleSocialLoginClick}
             />
             <SocialButton 
                 icon={<FacebookIcon className="w-5 h-5" />} 
                 label="Facebook" 
-                onClick={() => handleDemoLogin(SubscriptionTier.PREMIUM)}
+                onClick={handleSocialLoginClick}
             />
         </div>
 
@@ -124,7 +130,7 @@ const SignInPage: React.FC = () => {
         </div>
 
         <p className="text-center text-sm text-brand-text-secondary mt-8">
-          Don't have an account? <Link to="#" className="font-medium text-brand-primary hover:underline">Create one now</Link>
+          Don't have an account? <Link to="/signup" className="font-medium text-brand-primary hover:underline">Create one now</Link>
         </p>
          <p className="text-center text-xs text-brand-text-secondary mt-6">
           By signing in, you agree to our <Link to="#" className="underline">Terms of Service</Link> and <Link to="#" className="underline">Privacy Policy</Link>

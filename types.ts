@@ -274,3 +274,35 @@ export interface ApiKeys {
     gemini: string;
     other: string;
 }
+
+export interface FooterLinkItem {
+  label: string;
+  url: string;
+}
+
+export interface FooterColumn {
+  title: string;
+  links: FooterLinkItem[];
+}
+
+export interface FooterContactItem {
+  label: string;
+  value: string;
+  isLink: boolean;
+}
+
+export interface FooterContent {
+  description: string;
+  artisticProjectNote: string;
+  socialLinks: {
+    youtube: string;
+    globe: string;
+  };
+  columns: FooterColumn[];
+  contactInfo: {
+    title: string;
+    items: FooterContactItem[];
+  };
+  copyrightText: string;
+  poweredByText: string;
+}

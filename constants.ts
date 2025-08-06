@@ -1,5 +1,5 @@
 
-import { User, Artist, NewsArticle, DisplayTrack, SubscriptionTier, GalleryImage, PageID, StudioSubmission, ConstellationItem, Release, SpotlightItem, Playlist, Asset, AssetType, SubscriptionTierInfo, TeoApp, PointPackage, PlaylistCategory, FriendArtist, SoundStem, SoundStemCategory, SmtVideo, StudioActionCosts, ApiKeys } from './types';
+import { User, Artist, NewsArticle, DisplayTrack, SubscriptionTier, GalleryImage, PageID, StudioSubmission, ConstellationItem, Release, SpotlightItem, Playlist, Asset, AssetType, SubscriptionTierInfo, TeoApp, PointPackage, PlaylistCategory, FriendArtist, SoundStem, SoundStemCategory, SmtVideo, StudioActionCosts, ApiKeys, FooterContent } from './types';
 
 export const COAI_ARTISTS: Artist[] = [
   { 
@@ -673,3 +673,42 @@ export const SOUND_CATALOG: SoundStem[] = [
     { id: 'fx_glitch_stutter', name: 'Glitch Stutter', category: SoundStemCategory.FX, url: 'https://storage.googleapis.com/tev-public-assets/fx-3.mp3' },
     { id: 'fx_riser_epic', name: 'Epic Riser', category: SoundStemCategory.FX, url: 'https://storage.googleapis.com/tev-public-assets/fx-3.mp3' },
 ];
+
+export const DEFAULT_FOOTER_CONTENT: FooterContent = {
+  description: "TeO-CONGLOMERATE of all Life in creation. Pioneering the future of music through AI artistry and human creativity.",
+  artisticProjectNote: "Please note: This is an artistic project currently in development.",
+  socialLinks: {
+    youtube: "#",
+    globe: "#",
+  },
+  columns: [
+    {
+      title: "Quick Links",
+      links: [
+        { label: "Artists", url: "/artists" },
+        { label: "Music Store", url: "/store" },
+        { label: "Subscriptions", url: "/subscriptions" },
+        { label: "Chat with AI", url: "/chat" },
+      ],
+    },
+    {
+      title: "Legal",
+      links: [
+        { label: "Privacy Policy", url: "#" },
+        { label: "Terms of Service", url: "#" },
+        { label: "Cookie Policy", url: "#" },
+        { label: "DMCA", url: "#" },
+      ],
+    },
+  ],
+  contactInfo: {
+    title: "Contact",
+    items: [
+      { label: "Email:", value: "contact@teo.center", isLink: true },
+      { label: "Website:", value: "teo.center", isLink: true },
+      { label: "Community:", value: "Digital Realm", isLink: false },
+    ],
+  },
+  copyrightText: "TeO Music Studio (S.M.T.). All rights reserved.",
+  poweredByText: "Made with for music lovers",
+};

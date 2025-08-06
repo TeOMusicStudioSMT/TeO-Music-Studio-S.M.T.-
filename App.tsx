@@ -10,6 +10,7 @@ import HomePage from './pages/HomePage';
 import ArtistsPage from './pages/ArtistsPage';
 import ArtistProfilePage from './pages/ArtistProfilePage';
 import SignInPage from './pages/SignInPage';
+import SignUpPage from './pages/SignUpPage';
 import VIPLoungePage from './pages/VIPLoungePage';
 import StudioPage from './pages/StudioPage';
 import ChatPage from './pages/ChatPage';
@@ -44,6 +45,7 @@ import AdminPagesListPage from './pages/admin/AdminPagesListPage';
 import AdminPageEditPage from './pages/admin/AdminPageEditPage';
 import AdminUsersListPage from './pages/admin/AdminUsersListPage';
 import AdminUserEditPage from './pages/admin/AdminUserEditPage';
+import AdminUserCreatePage from './pages/admin/AdminUserCreatePage';
 import AdminCurationPage from './pages/admin/AdminCurationPage';
 import AdminConstellationListPage from './pages/admin/AdminConstellationListPage';
 import AdminConstellationEditPage from './pages/admin/AdminConstellationEditPage';
@@ -62,6 +64,7 @@ import AdminVideoEditPage from './pages/admin/AdminVideoEditPage';
 import AdminAccountingPage from './pages/admin/AdminAccountingPage';
 import AdminPermissionsPage from './pages/admin/AdminPermissionsPage';
 import AdminApiGatewayPage from './pages/admin/AdminApiGatewayPage';
+import AdminFooterEditPage from './pages/admin/AdminFooterEditPage';
 
 
 const App: React.FC = () => {
@@ -89,6 +92,7 @@ const App: React.FC = () => {
               <Route path="news" element={<NewsArchivePage />} />
               <Route path="news/:newsIndex" element={<NewsArticlePage />} />
               <Route path="signin" element={<SignInPage />} />
+              <Route path="signup" element={<SignUpPage />} />
               <Route path="vip-lounge" element={<VIPLoungePage />} />
               <Route path="studio" element={<StudioPage />} />
               <Route path="apps" element={<TeoAppPage />} />
@@ -137,7 +141,9 @@ const App: React.FC = () => {
                <Route path="apps/:appId/edit" element={<AdminAppEditPage />} />
                <Route path="pages" element={<AdminPagesListPage />} />
                <Route path="pages/:pageId/edit" element={<AdminPageEditPage />} />
+               <Route path="footer/edit" element={<AdminFooterEditPage />} />
                <Route path="users" element={<AdminUsersListPage />} />
+               <Route path="users/new" element={<AdminUserCreatePage />} />
                <Route path="users/:userEmail/edit" element={<AdminUserEditPage />} />
                <Route path="curation" element={<AdminCurationPage />} />
                <Route path="accounting" element={<AdminAccountingPage />} />

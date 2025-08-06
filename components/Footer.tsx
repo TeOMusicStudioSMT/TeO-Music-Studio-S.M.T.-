@@ -2,14 +2,36 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { MusicNoteIcon, GlobeIcon, YoutubeIcon, HeartIcon } from './icons';
+import { useContent } from '../hooks/useContent';
+import { FooterContactItem, FooterLinkItem } from '../types';
 
-const FooterLink: React.FC<{ to: string; label: string }> = ({ to, label }) => (
+const FooterLink: React.FC<{ item: FooterLinkItem }> = ({ item }) => (
     <li>
-        <Link to={to} className="text-brand-text-secondary hover:text-white transition-colors duration-200">{label}</Link>
+        <Link to={item.url} className="text-brand-text-secondary hover:text-white transition-colors duration-200">{item.label}</Link>
     </li>
 );
 
+const ContactItem: React.FC<{ item: FooterContactItem }> = ({ item }) => {
+    const linkValue = item.isLink && !item.value.startsWith('http') 
+        ? (item.value.includes('@') ? `mailto:${item.value}` : `https://${item.value}`)
+        : item.value;
+
+    return (
+        <li className="flex items-center space-x-2">
+            <span>{item.label}</span>
+            {item.isLink 
+                ? <a href={linkValue} target="_blank" rel="noopener noreferrer" className="hover:text-white">{item.value}</a>
+                : <span>{item.value}</span>
+            }
+        </li>
+    );
+};
+
+
 const Footer: React.FC = () => {
+  const { footerContent } = useContent();
+  const currentYear = new Date().getFullYear();
+
   return (
     <footer className="bg-brand-bg border-t border-brand-surface/50">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -23,51 +45,41 @@ const Footer: React.FC = () => {
                 </div>
             </Link>
             <p className="text-brand-text-secondary text-sm">
-                TeO-CONGLOMERATE of all Life in creation. Pioneering the future of music through AI artistry and human creativity.
+                {footerContent.description}
+            </p>
+             <p className="text-brand-text-secondary text-xs italic">
+                {footerContent.artisticProjectNote}
             </p>
             <div className="flex space-x-4">
-              <a href="#" className="text-brand-text-secondary hover:text-white"><YoutubeIcon className="w-6 h-6" /></a>
-              <a href="#" className="text-brand-text-secondary hover:text-white"><GlobeIcon className="w-6 h-6" /></a>
+              <a href={footerContent.socialLinks.youtube} target="_blank" rel="noopener noreferrer" className="text-brand-text-secondary hover:text-white"><YoutubeIcon className="w-6 h-6" /></a>
+              <a href={footerContent.socialLinks.globe} target="_blank" rel="noopener noreferrer" className="text-brand-text-secondary hover:text-white"><GlobeIcon className="w-6 h-6" /></a>
             </div>
           </div>
 
-          <div>
-            <h3 className="text-white font-semibold mb-4">Quick Links</h3>
-            <ul className="space-y-2">
-              <FooterLink to="/artists" label="Artists" />
-              <FooterLink to="/store" label="Music Store" />
-              <FooterLink to="/subscriptions" label="Subscriptions" />
-              <FooterLink to="/chat" label="Chat with AI" />
-            </ul>
-          </div>
+          {footerContent.columns.map(column => (
+              <div key={column.title}>
+                <h3 className="text-white font-semibold mb-4">{column.title}</h3>
+                <ul className="space-y-2">
+                  {column.links.map(link => <FooterLink key={link.label} item={link} />)}
+                </ul>
+              </div>
+          ))}
 
           <div>
-            <h3 className="text-white font-semibold mb-4">Legal</h3>
-            <ul className="space-y-2">
-              <FooterLink to="#" label="Privacy Policy" />
-              <FooterLink to="#" label="Terms of Service" />
-              <FooterLink to="#" label="Cookie Policy" />
-              <FooterLink to="#" label="DMCA" />
-            </ul>
-          </div>
-
-          <div>
-            <h3 className="text-white font-semibold mb-4">Contact</h3>
+            <h3 className="text-white font-semibold mb-4">{footerContent.contactInfo.title}</h3>
             <ul className="space-y-2 text-sm text-brand-text-secondary">
-                <li className="flex items-center space-x-2"><span>Email:</span> <a href="mailto:contact@teo.center" className="hover:text-white">contact@teo.center</a></li>
-                <li className="flex items-center space-x-2"><span>Website:</span> <a href="#" className="hover:text-white">teo.center</a></li>
-                <li className="flex items-center space-x-2"><span>Community:</span> <a href="#" className="hover:text-white">Digital Realm</a></li>
+               {footerContent.contactInfo.items.map(item => <ContactItem key={item.label} item={item} />)}
             </ul>
           </div>
         </div>
       </div>
       <div className="bg-brand-dark py-4 border-t border-brand-surface/50">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between items-center text-sm text-brand-text-secondary">
-          <p>&copy; {new Date().getFullYear()} TeO Music Studio (S.M.T.). All rights reserved.</p>
+          <p>&copy; {currentYear} {footerContent.copyrightText}</p>
           <p className="flex items-center space-x-1.5">
             <span>Powered by AI</span>
             <HeartIcon className="w-4 h-4 text-brand-secondary" />
-            <span>Made with for music lovers</span>
+            <span>{footerContent.poweredByText}</span>
           </p>
         </div>
       </div>

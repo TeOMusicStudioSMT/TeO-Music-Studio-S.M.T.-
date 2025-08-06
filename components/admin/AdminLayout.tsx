@@ -88,6 +88,10 @@ const AdminSidebar: React.FC = () => {
           <FileTextIcon className="w-5 h-5" />
           <span>Manage Pages</span>
         </NavLink>
+        <NavLink to="/admin/footer/edit" className={navLinkClasses}>
+          <FileTextIcon className="w-5 h-5" />
+          <span>Edit Footer</span>
+        </NavLink>
          <NavLink to="/admin/users" className={navLinkClasses}>
           <UsersIcon className="w-5 h-5" />
           <span>Manage Users</span>

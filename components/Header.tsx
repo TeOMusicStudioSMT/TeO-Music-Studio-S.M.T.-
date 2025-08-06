@@ -78,12 +78,7 @@ const Header: React.FC = () => {
             <NavItem to="/artists" icon={<UsersIcon className="w-5 h-5" />} label="Artists" />
             <NavItem to="/playlists" icon={<PlaylistIcon className="w-5 h-5" />} label="Playlists" />
             <NavItem to="/videos" icon={<VideoIcon className="w-5 h-5" />} label="Videos" />
-            {showTottCatalog && <NavItem to="/tott-catalog" icon={<StarIcon className="w-5 h-5" />} label="TOTT Catalog" />}
-            <NavItem to="/image-generator" icon={<SparklesIcon className="w-5 h-5" />} label="Creative Feed" />
-            <NavItem to="/constellation" icon={<GridIcon className="w-5 h-5" />} label="Constellation" />
             <NavItem to="/studio" icon={<MicIcon className="w-5 h-5" />} label="Studio" />
-            {hasPremiumAccess && <NavItem to="/apps" icon={<AppWindowIcon className="w-5 h-5" />} label="TeO Apps" />}
-            <NavItem to="/chat" icon={<MessageCircleIcon className="w-5 h-5" />} label="Chat" />
             
             {/* More Menu */}
             <div className="relative" ref={menuRef}>
@@ -94,15 +89,26 @@ const Header: React.FC = () => {
                     <MoreHorizontalIcon className="w-5 h-5"/>
                 </button>
                 {isMoreMenuOpen && (
-                    <div className="absolute right-0 mt-2 w-48 bg-brand-bg rounded-lg shadow-lg p-2">
+                    <div className="absolute right-0 mt-2 w-48 bg-brand-bg rounded-lg shadow-lg p-2 z-50">
                         {user && <NavItem to="/my-account" icon={<UsersIcon className="w-5 h-5" />} label="My Account" onClick={() => setMoreMenuOpen(false)} />}
                         {user && <NavItem to="/my-projects" icon={<FolderIcon className="w-5 h-5" />} label="My Projects" onClick={() => setMoreMenuOpen(false)} />}
                         {user?.tier === SubscriptionTier.VIP && <NavItem to="/vip-lounge" icon={<CrownIcon className="w-5 h-5" />} label="VIP Lounge" onClick={() => setMoreMenuOpen(false)} />}
-                        <NavItem to="/subscriptions" icon={<CreditCardIcon className="w-5 h-5" />} label="Subscriptions" onClick={() => setMoreMenuOpen(false)} />
-                        <NavItem to="/store" icon={<StoreIcon className="w-5 h-5" />} label="Store" onClick={() => setMoreMenuOpen(false)} />
-                        <NavItem to="/about" icon={<InfoIcon className="w-5 h-5" />} label="About" onClick={() => setMoreMenuOpen(false)} />
-                        <NavItem to="/support" icon={<GlobeIcon className="w-5 h-5" />} label="Support" onClick={() => setMoreMenuOpen(false)} />
-                        <NavItem to="/press" icon={<FileTextIcon className="w-5 h-5" />} label="Press" onClick={() => setMoreMenuOpen(false)} />
+                        
+                        <hr className="my-2 border-brand-surface/50" />
+
+                        <NavItem to="/image-generator" icon={<SparklesIcon className="w-5 h-5" />} label="Creative Feed" onClick={() => setMoreMenuOpen(false)} />}
+                        <NavItem to="/chat" icon={<MessageCircleIcon className="w-5 h-5" />} label="Chat" onClick={() => setMoreMenuOpen(false)} />}
+                        <NavItem to="/constellation" icon={<GridIcon className="w-5 h-5" />} label="Constellation" onClick={() => setMoreMenuOpen(false)} />}
+                        {hasPremiumAccess && <NavItem to="/apps" icon={<AppWindowIcon className="w-5 h-5" />} label="TeO Apps" onClick={() => setMoreMenuOpen(false)} />}
+                        {showTottCatalog && <NavItem to="/tott-catalog" icon={<StarIcon className="w-5 h-5" />} label="TOTT Catalog" onClick={() => setMoreMenuOpen(false)} />}
+                        
+                        <hr className="my-2 border-brand-surface/50" />
+                        
+                        <NavItem to="/subscriptions" icon={<CreditCardIcon className="w-5 h-5" />} label="Subscriptions" onClick={() => setMoreMenuOpen(false)} />}
+                        <NavItem to="/store" icon={<StoreIcon className="w-5 h-5" />} label="Store" onClick={() => setMoreMenuOpen(false)} />}
+                        <NavItem to="/about" icon={<InfoIcon className="w-5 h-5" />} label="About" onClick={() => setMoreMenuOpen(false)} />}
+                        <NavItem to="/support" icon={<GlobeIcon className="w-5 h-5" />} label="Support" onClick={() => setMoreMenuOpen(false)} />}
+                        <NavItem to="/press" icon={<FileTextIcon className="w-5 h-5" />} label="Press" onClick={() => setMoreMenuOpen(false)} />}
                     </div>
                 )}
             </div>
@@ -124,7 +130,7 @@ const Header: React.FC = () => {
                   <LogInIcon className="w-5 h-5" />
                   <span>Sign In</span>
                 </Link>
-                <Link to="/signin" className="flex items-center space-x-2 bg-gradient-to-r from-brand-primary to-brand-secondary text-white font-semibold px-4 py-2 rounded-lg text-sm hover:opacity-90 transition-opacity">
+                <Link to="/signup" className="flex items-center space-x-2 bg-gradient-to-r from-brand-primary to-brand-secondary text-white font-semibold px-4 py-2 rounded-lg text-sm hover:opacity-90 transition-opacity">
                   <span>Sign Up</span>
                 </Link>
               </div>

@@ -1,7 +1,7 @@
-
 import React from 'react';
 import { useContent } from '../hooks/useContent';
 import { ConstellationItem } from '../types';
+import WavySeparator from '../components/WavySeparator';
 
 const ConstellationCard: React.FC<{ item: ConstellationItem }> = ({ item }) => (
     <a 
@@ -37,7 +37,8 @@ const ConstellationPage: React.FC = () => {
         <div className="bg-brand-bg min-h-screen">
             <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-16">
                 <div className="text-center mb-12">
-                    <h1 className="text-5xl font-extrabold text-white">S.M.T. Constellation</h1>
+                    <h1 className="text-5xl font-extrabold bg-text-gradient bg-clip-text text-transparent bg-[size:200%_auto] animate-text-gradient-flow inline-block animate-neon-glow">S.M.T. Constellation</h1>
+                    <WavySeparator />
                     <p className="text-lg text-brand-text-secondary mt-4 max-w-3xl mx-auto">
                         An ecosystem of our trusted partners, side-projects, and collaborators. Explore the universe expanding from TeO Music Studio.
                     </p>

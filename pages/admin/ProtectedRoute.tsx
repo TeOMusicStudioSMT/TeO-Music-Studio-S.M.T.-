@@ -1,5 +1,5 @@
 import React from 'react';
-import { Navigate } from 'react-router-dom';
+import * as ReactRouterDOM from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 
 interface ProtectedRouteProps {
@@ -12,7 +12,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   if (!isAdmin) {
     // Redirect them to the /admin/login page, but save the current location they were
     // trying to go to. This is a good practice for UX, though not fully implemented here.
-    return <Navigate to="/admin/login" replace />;
+    return <ReactRouterDOM.Navigate to="/admin/login" replace />;
   }
 
   return children;

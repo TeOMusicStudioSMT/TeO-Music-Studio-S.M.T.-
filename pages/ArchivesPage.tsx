@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { useContent } from '../hooks/useContent';
 import { useAuth } from '../hooks/useAuth';
@@ -6,14 +5,14 @@ import { GalleryImage, UserProject, UserProjectType } from '../types';
 import { generateImage } from '../services/geminiService';
 import toast from 'react-hot-toast';
 import { SparklesIcon, DownloadIcon, MaximizeIcon, FolderPlusIcon, PlusCircleIcon, XIcon } from '../components/icons';
-import { Link, useNavigate } from 'react-router-dom';
+import * as ReactRouterDOM from 'react-router-dom';
 import { IMAGE_GENERATION_COST } from '../constants';
 
 // Modal Component for viewing and interacting with a generated image
 const ImageModal: React.FC<{ item: GalleryImage; onClose: () => void }> = ({ item, onClose }) => {
     const imageRef = useRef<HTMLImageElement>(null);
     const { user, addUserProject } = useAuth();
-    const navigate = useNavigate();
+    const navigate = ReactRouterDOM.useNavigate();
 
     // Handle Esc key to close modal
     useEffect(() => {
@@ -60,7 +59,7 @@ const ImageModal: React.FC<{ item: GalleryImage; onClose: () => void }> = ({ ite
             onClick={onClose}
         >
             <div 
-                className="bg-brand-bg rounded-xl shadow-2xl w-full max-w-6xl max-h-[90vh] flex flex-col lg:flex-row gap-4 p-4 relative"
+                className="bg-brand-bg rounded-xl shadow-2xl w-full max-w-6xl max-h-[90vh] flex flex-col lg:flex-row gap-4 p-4 relative animate-burst-in"
                 onClick={(e) => e.stopPropagation()}
             >
                 <div className="flex-grow lg:w-3/4 h-full bg-black rounded-lg overflow-hidden flex items-center justify-center">
@@ -116,19 +115,18 @@ const ImageModal: React.FC<{ item: GalleryImage; onClose: () => void }> = ({ ite
     );
 };
 
-const GalleryCard: React.FC<{ item: GalleryImage; onCardClick: () => void }> = ({ item, onCardClick }) => (
-    <div onClick={onCardClick} className="cursor-pointer group relative bg-brand-surface rounded-lg overflow-hidden shadow-lg aspect-[4/5] transition-transform duration-300 ease-in-out hover:scale-[1.02] hover:shadow-brand-primary/20">
-        <img src={item.imageUrl} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
-        <div className="absolute inset-0 p-4 flex flex-col justify-end opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-gradient-to-t from-black/80 to-transparent">
-            <p className="text-white text-sm font-medium line-clamp-3">{item.prompt}</p>
-            <div className="flex items-center gap-2 mt-2 pt-2 border-t border-white/20">
-                <img 
-                    src={item.userAvatarUrl || `https://ui-avatars.com/api/?name=${item.userName}&background=8A42DB&color=fff`} 
-                    alt={item.userName} 
-                    className="w-6 h-6 rounded-full object-cover" 
-                />
-                <span className="text-white text-xs font-bold">{item.userName}</span>
+const GalleryCard: React.FC<{ item: GalleryImage; onCardClick: () => void; index: number; }> = ({ item, onCardClick, index }) => (
+    <div 
+        onClick={onCardClick} 
+        className="cursor-pointer group relative bg-brand-surface rounded-full overflow-hidden shadow-lg aspect-square w-40 h-40 sm:w-48 sm:h-48 md:w-56 md:h-56 transition-all duration-300 ease-in-out hover:scale-110 hover:shadow-brand-primary/30"
+        style={{ animation: `bubbleFloat 8s ease-in-out infinite`, animationDelay: `${index * 0.3}s` }}
+    >
+        <img src={item.imageUrl} alt={item.title} className="w-full h-full object-cover scale-110 group-hover:scale-125 transition-transform duration-500" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent rounded-full" />
+        <div className="absolute inset-0 flex items-center justify-center text-center p-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-black/60 rounded-full">
+            <div>
+                <p className="text-white text-sm font-medium line-clamp-3">{item.prompt}</p>
+                <p className="text-xs text-brand-text-secondary mt-2">by {item.userName}</p>
             </div>
         </div>
     </div>
@@ -144,6 +142,7 @@ const CreativeFeedPage: React.FC = () => {
     const [selectedImage, setSelectedImage] = useState<GalleryImage | null>(null);
     const [page, setPage] = useState(1);
     const ITEMS_PER_PAGE = 12;
+    const gridRef = useRef<HTMLDivElement>(null);
 
     const displayedImages = React.useMemo(() => {
         return [...galleryImages].reverse().slice(0, page * ITEMS_PER_PAGE);
@@ -154,7 +153,7 @@ const CreativeFeedPage: React.FC = () => {
     const loadMore = () => {
         setPage(prev => prev + 1);
     }
-
+    
     const handleGenerate = async () => {
         if (!prompt || !user) {
             setError('Please enter a prompt to generate an image.');
@@ -229,9 +228,9 @@ const CreativeFeedPage: React.FC = () => {
             <div className="text-center py-20">
                 <h2 className="text-3xl font-bold text-white">Enter the Creative Feed</h2>
                 <p className="text-brand-text-secondary mt-4">You need to be signed in to generate images with AI.</p>
-                <Link to="/signin" className="mt-6 inline-block bg-gradient-to-r from-brand-primary to-brand-secondary text-white font-semibold px-6 py-3 rounded-lg hover:opacity-90 transition-opacity">
+                <ReactRouterDOM.Link to="/signin" className="mt-6 inline-block bg-gradient-to-r from-brand-primary to-brand-secondary text-white font-semibold px-6 py-3 rounded-lg hover:opacity-90 transition-opacity">
                     Sign In to Generate
-                </Link>
+                </ReactRouterDOM.Link>
             </div>
         )
     }
@@ -239,11 +238,11 @@ const CreativeFeedPage: React.FC = () => {
     const canGenerate = user.points >= IMAGE_GENERATION_COST;
 
     return (
-        <div className="bg-brand-bg min-h-screen">
+        <div className="bg-brand-bg min-h-screen" style={{ perspective: '1000px' }}>
             {selectedImage && <ImageModal item={selectedImage} onClose={() => setSelectedImage(null)} />}
             <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-16">
                 <div className="text-center mb-12">
-                    <h1 className="text-5xl font-extrabold text-white">Creative Feed</h1>
+                    <h1 className="text-5xl font-extrabold bg-text-gradient bg-clip-text text-transparent bg-[size:200%_auto] animate-text-gradient-flow inline-block">Creative Feed</h1>
                     <p className="text-lg text-brand-text-secondary mt-4 max-w-3xl mx-auto">
                        Explore a universe of AI-generated visuals from our community. Create your own and add to the collection.
                     </p>
@@ -269,15 +268,17 @@ const CreativeFeedPage: React.FC = () => {
                 </div>
 
                 {displayedImages.length > 0 ? (
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                        {displayedImages.map(item => (
-                            <GalleryCard key={item.id} item={item} onCardClick={() => setSelectedImage(item)} />
+                    <div ref={gridRef} className="flex flex-wrap justify-center gap-8 md:gap-12 py-8">
+                        {displayedImages.map((item, index) => (
+                            <GalleryCard key={item.id} item={item} onCardClick={() => setSelectedImage(item)} index={index} />
                         ))}
                     </div>
                 ) : (
                     <div className="text-center py-20 border-2 border-dashed border-brand-surface rounded-lg">
                         <p className="text-2xl text-white">The Gallery is Eager for Your Vision</p>
-                        <p className="text-brand-text-secondary mt-2">Be the first to create and add an image!</p>
+                        <p className="text-brand-text-secondary mt-2">
+                            Be the first to create and add an image!
+                        </p>
                     </div>
                 )}
 

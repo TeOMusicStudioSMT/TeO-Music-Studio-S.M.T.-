@@ -1,15 +1,15 @@
 import React, { useState } from 'react';
-import { useNavigate, Navigate } from 'react-router-dom';
+import * as ReactRouterDOM from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import toast from 'react-hot-toast';
 
 const AdminLoginPage: React.FC = () => {
   const [password, setPassword] = useState('');
   const { adminLogin, isAdmin } = useAuth();
-  const navigate = useNavigate();
+  const navigate = ReactRouterDOM.useNavigate();
 
   if (isAdmin) {
-    return <Navigate to="/admin/jason-dashboard" replace />;
+    return <ReactRouterDOM.Navigate to="/admin/jason-dashboard" replace />;
   }
 
   const handleSignIn = (e: React.FormEvent) => {

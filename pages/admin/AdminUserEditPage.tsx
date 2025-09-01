@@ -1,6 +1,7 @@
 
+
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import * as ReactRouterDOM from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { User, SubscriptionTier } from '../../types';
 import toast from 'react-hot-toast';
@@ -8,8 +9,8 @@ import NotFoundPage from '../NotFoundPage';
 import { Trash2Icon } from '../../components/icons';
 
 const AdminUserEditPage: React.FC = () => {
-  const { userEmail } = useParams<{ userEmail: string }>();
-  const navigate = useNavigate();
+  const { userEmail } = ReactRouterDOM.useParams<{ userEmail: string }>();
+  const navigate = ReactRouterDOM.useNavigate();
   const { allUsers, updateUser, deleteUser } = useAuth();
   
   const [user, setUser] = useState<User | null>(null);

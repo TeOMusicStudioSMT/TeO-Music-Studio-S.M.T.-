@@ -1,6 +1,7 @@
 
+
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import * as ReactRouterDOM from 'react-router-dom';
 import { useContent } from '../../hooks/useContent';
 import { ConstellationItem } from '../../types';
 import toast from 'react-hot-toast';
@@ -9,8 +10,8 @@ import ImageGenerationInput from '../../components/admin/ImageGenerationInput';
 import TextGenerationInput from '../../components/admin/TextGenerationInput';
 
 const AdminConstellationEditPage: React.FC = () => {
-  const { itemId } = useParams<{ itemId: string }>();
-  const navigate = useNavigate();
+  const { itemId } = ReactRouterDOM.useParams<{ itemId: string }>();
+  const navigate = ReactRouterDOM.useNavigate();
   const { constellationItems, addConstellationItem, updateConstellationItem } = useContent();
   
   const isEditing = itemId !== undefined;

@@ -1,7 +1,8 @@
 
+
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../hooks/useAuth';
-import { Link } from 'react-router-dom';
+import * as ReactRouterDOM from 'react-router-dom';
 import { Artist, ChatMessage, SubscriptionTier } from '../types';
 import { COAI_ARTISTS, CHAT_QUERY_LIMITS, CHAT_MESSAGE_COST } from '../constants';
 import { getArtistChatResponse } from '../services/geminiService';
@@ -73,9 +74,9 @@ const ChatPage: React.FC = () => {
         <div className="text-center py-20">
             <h2 className="text-3xl font-bold text-white">Chat With Our Artists</h2>
             <p className="text-brand-text-secondary mt-4">You need to be signed in to talk with our CoAI artists.</p>
-            <Link to="/signin" className="mt-6 inline-block bg-gradient-to-r from-brand-primary to-brand-secondary text-white font-semibold px-6 py-3 rounded-lg hover:opacity-90 transition-opacity">
+            <ReactRouterDOM.Link to="/signin" className="mt-6 inline-block bg-gradient-to-r from-brand-primary to-brand-secondary text-white font-semibold px-6 py-3 rounded-lg hover:opacity-90 transition-opacity">
                 Sign In to Chat
-            </Link>
+            </ReactRouterDOM.Link>
         </div>
     )
   }

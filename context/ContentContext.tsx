@@ -1,14 +1,16 @@
 
-import React, { createContext, useState, ReactNode, useEffect, useMemo } from 'react';
-import { Artist, NewsArticle, DisplayTrack, GalleryImage, PageID, StudioSubmission, SubmissionStatus, ConstellationItem, Release, Track, SpotlightItem, Playlist, CurrentlyPlayingTrack, Asset, TeoApp, FriendArtist, PlaylistCategory, SmtVideo, StudioActionCosts, ApiKeys, FooterContent } from '../types';
+
+import React, { createContext, useState, ReactNode, useEffect, useMemo, useRef } from 'react';
+import { Artist, NewsArticle, DisplayTrack, GalleryImage, PageID, StudioSubmission, SubmissionStatus, ConstellationItem, Release, Track, SpotlightItem, Playlist, CurrentlyPlayingTrack, Asset, TeoApp, FriendArtist, PlaylistCategory, SmtVideo, StudioActionCosts, ApiKeys, FooterContent, SpecializedAgent, JasonChatMessage } from '../types';
 import { 
   COAI_ARTISTS, LATEST_NEWS, FEATURED_VIDEO_URLS, GALLERY_IMAGES, 
   STATIC_PAGE_CONTENT, STUDIO_SUBMISSIONS, CONSTELLATION_ITEMS, SPOTLIGHT_ITEMS, 
   PLAYLISTS, ASSET_VAULT, TRENDING_TRACK_IDS_DEFAULT, FEATURED_TRACK_URL_DEFAULT,
   TEO_APPS, FRIEND_ARTISTS, SMT_VIDEOS, PORTAL_URL_DEFAULT, DEFAULT_STUDIO_COSTS,
-  DEFAULT_API_KEYS, DEFAULT_FOOTER_CONTENT
+  DEFAULT_API_KEYS, DEFAULT_FOOTER_CONTENT, SPECIALIZED_AGENTS
 } from '../constants';
 import toast from 'react-hot-toast';
+import { Chat } from '@google/genai';
 
 // Define the shape of the state that IS persisted to localStorage
 interface PersistedState {
@@ -31,12 +33,14 @@ interface PersistedState {
   studioCosts: StudioActionCosts;
   apiKeys: ApiKeys;
   footerContent: FooterContent;
+  specializedAgents: SpecializedAgent[];
 }
 
 // Define the shape of the state that is NOT persisted (volatile)
 interface VolatileState {
   galleryImages: GalleryImage[];
   studioSubmissions: StudioSubmission[];
+  specializedAgentChats: Record<string, JasonChatMessage[]>;
 }
 
 // The full state is a combination of both
@@ -47,7 +51,8 @@ interface ContentContextType extends ContentState {
   currentTrack: CurrentlyPlayingTrack | null;
   currentPlaylist: CurrentlyPlayingTrack[] | null;
   currentTrackIndex: number;
-  trendingTracks: DisplayTrack[];
+  trendingTracks: CurrentlyPlayingTrack[];
+  addArtist: (newArtist: Artist) => void;
   updateArtist: (updatedArtist: Artist) => void;
   updateNewsArticle: (updatedArticle: NewsArticle, index: number) => void;
   addNewsArticle: (newArticle: NewsArticle) => void;
@@ -92,6 +97,8 @@ interface ContentContextType extends ContentState {
   updateStudioCosts: (newCosts: StudioActionCosts) => void;
   updateApiKeys: (keys: ApiKeys) => void;
   updateFooterContent: (newContent: FooterContent) => void;
+  setSpecializedAgentChats: React.Dispatch<React.SetStateAction<Record<string, JasonChatMessage[]>>>;
+  specializedAgentSessions: React.MutableRefObject<Record<string, Chat | null>>;
 }
 
 export const ContentContext = createContext<ContentContextType | undefined>(undefined);
@@ -100,7 +107,7 @@ interface ContentProviderProps {
   children: ReactNode;
 }
 
-const CONTENT_STORAGE_KEY = 'smt-content-data-v12'; // Version incremented for footer
+const CONTENT_STORAGE_KEY = 'smt-content-data-v13'; // Version incremented for agents
 
 // Function to get initial PERSISTED state from localStorage or constants
 const getInitialPersistedState = (): PersistedState => {
@@ -109,7 +116,7 @@ const getInitialPersistedState = (): PersistedState => {
         if (storedContent) {
             const parsed = JSON.parse(storedContent);
             // Check for essential persisted properties to ensure data validity
-            if (parsed.artists && parsed.pageContents && parsed.footerContent) {
+            if (parsed.artists && parsed.pageContents && parsed.footerContent && parsed.specializedAgents) {
                return parsed;
             }
         }
@@ -137,6 +144,7 @@ const getInitialPersistedState = (): PersistedState => {
         studioCosts: DEFAULT_STUDIO_COSTS,
         apiKeys: DEFAULT_API_KEYS,
         footerContent: DEFAULT_FOOTER_CONTENT,
+        specializedAgents: SPECIALIZED_AGENTS,
     };
 };
 
@@ -146,10 +154,13 @@ export const ContentProvider: React.FC<ContentProviderProps> = ({ children }) =>
       // Initialize volatile state separately. It will be empty on page load.
       galleryImages: GALLERY_IMAGES, 
       studioSubmissions: STUDIO_SUBMISSIONS,
+      specializedAgentChats: {},
   });
   
   const [currentPlaylist, setCurrentPlaylist] = useState<CurrentlyPlayingTrack[] | null>(null);
   const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
+  const [specializedAgentChats, setSpecializedAgentChats] = useState<Record<string, JasonChatMessage[]>>({});
+  const specializedAgentSessions = useRef<Record<string, Chat | null>>({});
 
   const currentTrack = useMemo(() => {
     return currentPlaylist ? currentPlaylist[currentTrackIndex] : null;
@@ -172,28 +183,17 @@ export const ContentProvider: React.FC<ContentProviderProps> = ({ children }) =>
     return map;
   }, [state.artists]);
 
-  const trendingTracks: DisplayTrack[] = useMemo(() => {
-    return state.trendingTrackIds.map((trackId): DisplayTrack | null => {
-        const track = allTracksMap.get(trackId);
-        if (track) {
-            return {
-                id: track.id,
-                title: track.title,
-                artist: track.artistName,
-                type: 'Single', // This part is a bit tricky without full release info here
-                imageUrl: track.coverImageUrl,
-                sourceUrl: track.sourceUrl
-            };
-        }
-        return null;
-    }).filter((t): t is DisplayTrack => t !== null);
+  const trendingTracks: CurrentlyPlayingTrack[] = useMemo(() => {
+    return state.trendingTrackIds
+      .map(trackId => allTracksMap.get(trackId))
+      .filter((t): t is CurrentlyPlayingTrack => t !== undefined);
   }, [state.trendingTrackIds, allTracksMap]);
 
 
   // Effect to persist ONLY the non-volatile state to localStorage
   useEffect(() => {
     try {
-        const { galleryImages, studioSubmissions, ...persistedState } = state;
+        const { galleryImages, studioSubmissions, specializedAgentChats: _, ...persistedState } = state;
         localStorage.setItem(CONTENT_STORAGE_KEY, JSON.stringify(persistedState));
     } catch (error) {
         console.error("Failed to save content to localStorage:", error);
@@ -201,6 +201,16 @@ export const ContentProvider: React.FC<ContentProviderProps> = ({ children }) =>
         toast.error("Could not save session data. Changes may not be saved across reloads.", {id: 'storage-error'});
     }
   }, [state]);
+
+  const addArtist = (newArtist: Artist) => {
+    setState(prevState => {
+        if (prevState.artists.some(a => a.id.toLowerCase() === newArtist.id.toLowerCase())) {
+            toast.error(`An artist with ID '${newArtist.id}' already exists.`);
+            return prevState;
+        }
+        return { ...prevState, artists: [...prevState.artists, newArtist] };
+    });
+  };
 
   const updateArtist = (updatedArtist: Artist) => {
     setState(prevState => ({
@@ -449,11 +459,13 @@ export const ContentProvider: React.FC<ContentProviderProps> = ({ children }) =>
   return (
     <ContentContext.Provider value={{ 
         ...state,
+        specializedAgentChats,
         allTracksMap,
         currentTrack,
         currentPlaylist,
         currentTrackIndex,
         trendingTracks,
+        addArtist,
         updateArtist, 
         updateNewsArticle, 
         addNewsArticle, 
@@ -498,6 +510,8 @@ export const ContentProvider: React.FC<ContentProviderProps> = ({ children }) =>
         updateStudioCosts,
         updateApiKeys,
         updateFooterContent,
+        setSpecializedAgentChats,
+        specializedAgentSessions,
     }}>
       {children}
     </ContentContext.Provider>

@@ -1,14 +1,13 @@
-
 import React, { useState, useRef } from 'react';
 import { useAuth } from '../hooks/useAuth';
-import { Link, useNavigate } from 'react-router-dom';
+import * as ReactRouterDOM from 'react-router-dom';
 import { SubscriptionTier, User } from '../types';
 import toast from 'react-hot-toast';
 import { CrownIcon, StarIcon, WalletIcon } from '../components/icons';
 
 const MyAccountPage: React.FC = () => {
     const { user, updateUser, logout } = useAuth();
-    const navigate = useNavigate();
+    const navigate = ReactRouterDOM.useNavigate();
     
     const [editableUser, setEditableUser] = useState<Partial<User>>({
         vanityName: user?.vanityName || user?.name,
@@ -23,9 +22,9 @@ const MyAccountPage: React.FC = () => {
             <div className="text-center py-20">
                 <h2 className="text-3xl font-bold text-white">My Account</h2>
                 <p className="text-brand-text-secondary mt-4">You need to be signed in to view your account details.</p>
-                <Link to="/signin" className="mt-6 inline-block bg-gradient-to-r from-brand-primary to-brand-secondary text-white font-semibold px-6 py-3 rounded-lg hover:opacity-90 transition-opacity">
+                <ReactRouterDOM.Link to="/signin" className="mt-6 inline-block bg-gradient-to-r from-brand-primary to-brand-secondary text-white font-semibold px-6 py-3 rounded-lg hover:opacity-90 transition-opacity">
                     Sign In
-                </Link>
+                </ReactRouterDOM.Link>
             </div>
         );
     }
@@ -156,9 +155,9 @@ const MyAccountPage: React.FC = () => {
                                     <p className="text-sm text-brand-text-secondary">Manage billing or change your plan.</p>
                                 </div>
                                 <div className="flex items-center gap-2 flex-shrink-0">
-                                    <Link to="/subscriptions" className="btn-secondary-outline border-brand-primary text-brand-primary hover:bg-brand-primary hover:text-white">
+                                    <ReactRouterDOM.Link to="/subscriptions" className="btn-secondary-outline border-brand-primary text-brand-primary hover:bg-brand-primary hover:text-white">
                                         Change Plan
-                                    </Link>
+                                    </ReactRouterDOM.Link>
                                     {user.tier !== SubscriptionTier.FREE && (
                                         <button onClick={handleDowngrade} className="btn-secondary-outline border-yellow-500 text-yellow-500 hover:bg-yellow-500 hover:text-black">
                                             Downgrade to Free
@@ -171,9 +170,9 @@ const MyAccountPage: React.FC = () => {
                                     <p className="text-white font-bold">SMT Point Wallet</p>
                                     <p className="text-sm text-brand-text-secondary">View your balance and purchase more points.</p>
                                 </div>
-                                <Link to="/store" className="bg-brand-surface border border-brand-primary px-4 py-2 rounded-lg font-semibold text-brand-primary hover:bg-brand-primary hover:text-white transition-colors flex items-center gap-2">
+                                <ReactRouterDOM.Link to="/store" className="bg-brand-surface border border-brand-primary px-4 py-2 rounded-lg font-semibold text-brand-primary hover:bg-brand-primary hover:text-white transition-colors flex items-center gap-2">
                                     <WalletIcon className="w-5 h-5" /> Go to Store
-                                </Link>
+                                </ReactRouterDOM.Link>
                             </div>
                        </div>
                         <div className="border-t border-brand-surface my-8"></div>

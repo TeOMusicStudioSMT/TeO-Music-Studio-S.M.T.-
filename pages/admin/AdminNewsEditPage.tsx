@@ -1,6 +1,7 @@
 
+
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import * as ReactRouterDOM from 'react-router-dom';
 import { useContent } from '../../hooks/useContent';
 import { NewsArticle } from '../../types';
 import toast from 'react-hot-toast';
@@ -8,8 +9,8 @@ import ImageGenerationInput from '../../components/admin/ImageGenerationInput';
 import TextGenerationInput from '../../components/admin/TextGenerationInput';
 
 const AdminNewsEditPage: React.FC = () => {
-  const { newsIndex } = useParams<{ newsIndex: string }>();
-  const navigate = useNavigate();
+  const { newsIndex } = ReactRouterDOM.useParams<{ newsIndex: string }>();
+  const navigate = ReactRouterDOM.useNavigate();
   const { news, addNewsArticle, updateNewsArticle } = useContent();
   
   const isEditing = newsIndex !== undefined;

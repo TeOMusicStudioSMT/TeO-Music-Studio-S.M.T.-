@@ -1,4 +1,5 @@
 
+
 export enum SubscriptionTier {
   FREE = 'Free',
   BASIC = 'Basic',
@@ -26,6 +27,12 @@ export interface UserProject {
     };
 }
 
+export interface UserPlaylist {
+  id: string;
+  title: string;
+  description: string;
+  trackIds: string[];
+}
 
 export interface User {
   name: string;
@@ -38,6 +45,7 @@ export interface User {
   memberSince: string;
   lastLogin?: string;
   projects: UserProject[];
+  playlists?: UserPlaylist[];
 }
 
 export interface Track {
@@ -45,6 +53,7 @@ export interface Track {
   title: string;
   sourceUrl?: string;
   accessTier?: SubscriptionTier;
+  description?: string;
 }
 
 export interface Release {
@@ -65,6 +74,7 @@ export interface Artist {
   bio: string;
   discography: Release[];
   gallery: string[];
+  spotifyArtistEmbedUrl?: string;
 }
 
 export interface FriendArtist {
@@ -115,7 +125,7 @@ export interface GalleryImage {
   userAvatarUrl?: string;
 }
 
-export type PageID = 'about' | 'store' | 'support' | 'press';
+export type PageID = 'about' | 'store' | 'support' | 'press' | 'privacy' | 'terms' | 'cookies' | 'dmca';
 
 export enum SubmissionStatus {
   PENDING = 'Pending',
@@ -305,4 +315,17 @@ export interface FooterContent {
   };
   copyrightText: string;
   poweredByText: string;
+}
+
+export interface SpecializedAgent {
+  id: string;
+  name: string;
+  description: string;
+  systemInstruction: string;
+  type?: 'chat' | 'code';
+}
+
+export interface JasonChatMessage {
+  sender: 'user' | 'jason';
+  text: string;
 }

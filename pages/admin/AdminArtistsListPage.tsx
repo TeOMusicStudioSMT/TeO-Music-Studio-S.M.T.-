@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import * as ReactRouterDOM from 'react-router-dom';
 import { useContent } from '../../hooks/useContent';
 import { ArrowRightIcon } from '../../components/icons';
 
@@ -20,13 +20,13 @@ const AdminArtistsListPage: React.FC = () => {
                   <p className="text-sm text-brand-text-secondary">{artist.genre}</p>
                 </div>
               </div>
-              <Link
+              <ReactRouterDOM.Link
                 to={`/admin/artists/${artist.id}/edit`}
                 className="flex items-center space-x-2 text-brand-primary hover:text-white transition-colors"
               >
                 <span>Edit</span>
                 <ArrowRightIcon className="w-4 h-4" />
-              </Link>
+              </ReactRouterDOM.Link>
             </div>
           ))}
         </div>

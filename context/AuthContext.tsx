@@ -1,16 +1,23 @@
 
-import React, { createContext, useState, ReactNode, useEffect, useRef } from 'react';
-import { User, SubscriptionTier, UserProject } from '../types';
-import { DEMO_ACCOUNTS, DAILY_POINT_ALLOWANCE } from '../constants';
+
+import React, { createContext, useState, ReactNode, useEffect, useRef, useCallback } from 'react';
+import { User, SubscriptionTier, UserProject, UserPlaylist } from '../types';
+import { DAILY_POINT_ALLOWANCE } from '../constants';
 import toast from 'react-hot-toast';
+
+// Add types for Google Identity Services
+declare global {
+  interface Window {
+    google: any;
+  }
+}
 
 interface AuthContextType {
   user: User | null;
   allUsers: User[];
-  login: (tier: SubscriptionTier) => void;
+  login: () => void;
   logout: () => void;
-  signUp: (name: string, email: string) => boolean;
-  createUser: (newUser: Omit<User, 'projects' | 'memberSince' | 'avatarInitial'>) => boolean;
+  createUser: (newUser: Omit<User, 'projects' | 'memberSince' | 'avatarInitial' | 'playlists'>) => boolean;
   updateUser: (updatedUser: User) => void;
   deleteUser: (email: string) => void;
   addUserProject: (project: UserProject) => void;
@@ -18,6 +25,10 @@ interface AuthContextType {
   adminLogin: (password: string) => boolean;
   adminLogout: () => void;
   changeAdminPassword: (current: string, newPass: string) => boolean;
+  isGoogleReady: boolean;
+  createUserPlaylist: (title: string, description: string) => void;
+  deleteUserPlaylist: (playlistId: string) => void;
+  updateUserPlaylist: (playlistId: string, updates: Partial<UserPlaylist>) => void;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -43,12 +54,13 @@ const getInitialUsers = (): User[] => {
             return users.map(u => ({
                 ...u,
                 projects: allProjects[u.email] || [],
+                playlists: u.playlists || [],
             }));
         }
     } catch (error) {
         console.error("Failed to parse data from localStorage", error);
     }
-    return Object.values(DEMO_ACCOUNTS);
+    return [];
 };
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
@@ -56,14 +68,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
   const [adminPassword, setAdminPassword] = useState<string>('password');
-  const demoTimerRef = useRef<number | null>(null);
+  const [isGoogleReady, setIsGoogleReady] = useState(false);
+  const googleInitialized = useRef(false);
 
   const updateUser = (updatedUser: User) => {
-    const newAllUsers = allUsers.map(u => u.email === updatedUser.email ? updatedUser : u);
-    setAllUsers(newAllUsers);
-    if (user && user.email === updatedUser.email) {
-        setUser(updatedUser);
-    }
+    setAllUsers(prevAllUsers => prevAllUsers.map(u => u.email === updatedUser.email ? updatedUser : u));
+    setUser(prevUser => (prevUser && prevUser.email === updatedUser.email) ? updatedUser : prevUser);
   };
   
   const processDailyPoints = (targetUser: User) => {
@@ -93,6 +103,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
            setUser(finalUser);
         }
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -127,57 +138,107 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   }, []);
 
-  const login = (tier: SubscriptionTier) => {
-    let targetUser = allUsers.find(u => u.tier === tier && u.email.endsWith('@demo.com'));
-    if (!targetUser) return;
-    
-    const finalUser = processDailyPoints(targetUser);
-    setUser(finalUser);
-    sessionStorage.setItem(CURRENT_USER_EMAIL_KEY, finalUser.email);
-    
-    if (finalUser.email.endsWith('@demo.com')) {
-        if(demoTimerRef.current) clearTimeout(demoTimerRef.current);
-        demoTimerRef.current = window.setTimeout(() => {
-            logout();
-            toast.success("Your 5-minute demo session has ended. Please sign up for a full experience!");
-        }, 5 * 60 * 1000); // 5 minutes
-    }
-  };
+  const handleCredentialResponse = useCallback((response: any) => {
+    try {
+        const idTokenFromGoogle = response.credential;
+        sessionStorage.setItem('smt-id-token', idTokenFromGoogle);
+        const profile = JSON.parse(atob(idTokenFromGoogle.split('.')[1]));
+        
+        setAllUsers(currentAllUsers => {
+            let userToLogin = currentAllUsers.find(u => u.email === profile.email);
+            let updatedAllUsers = currentAllUsers;
 
+            if (!userToLogin) {
+                const newUser: User = {
+                    name: profile.name,
+                    email: profile.email,
+                    avatarInitial: profile.name.charAt(0).toUpperCase(),
+                    avatarUrl: profile.picture,
+                    tier: SubscriptionTier.FREE,
+                    points: 100, // Starting points for new users
+                    memberSince: new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
+                    lastLogin: '',
+                    projects: [],
+                    playlists: [],
+                };
+                updatedAllUsers = [...currentAllUsers, newUser];
+                userToLogin = newUser;
+            }
+
+            const today = new Date().toISOString().split('T')[0];
+            let finalUser = userToLogin;
+
+            if (userToLogin.lastLogin !== today) {
+                const pointsToAdd = DAILY_POINT_ALLOWANCE[userToLogin.tier] || 0;
+                finalUser = { 
+                    ...userToLogin, 
+                    points: userToLogin.points + pointsToAdd,
+                    lastLogin: today 
+                };
+                
+                updatedAllUsers = updatedAllUsers.map(u => u.email === finalUser.email ? finalUser : u);
+                
+                if (pointsToAdd > 0) {
+                    toast.success(`+${pointsToAdd} daily SMT Points!`);
+                }
+            }
+
+            setUser(finalUser);
+            sessionStorage.setItem(CURRENT_USER_EMAIL_KEY, finalUser.email);
+            toast.success(`Welcome back, ${finalUser.name}!`);
+            
+            return updatedAllUsers;
+        });
+
+    } catch (error) {
+        console.error("Error handling Google Sign-In:", error);
+        toast.error("Could not sign in with Google.");
+    }
+  }, []);
+
+  useEffect(() => {
+    if (googleInitialized.current) return;
+
+    const checkGoogle = () => {
+        if (window.google && window.google.accounts) {
+// FIX: Environment variables in Create React App must be prefixed with REACT_APP_.
+             if (!process.env.REACT_APP_GOOGLE_CLIENT_ID) {
+                console.warn("REACT_APP_GOOGLE_CLIENT_ID environment variable not set. Google Sign-In will not work.");
+                toast.error("Google Sign-In is not configured by the administrator.", { duration: 6000 });
+                return;
+            }
+            window.google.accounts.id.initialize({
+                client_id: process.env.REACT_APP_GOOGLE_CLIENT_ID,
+                callback: handleCredentialResponse
+            });
+            setIsGoogleReady(true);
+            googleInitialized.current = true;
+        } else {
+            setTimeout(checkGoogle, 100); // Poll for GSI client
+        }
+    };
+    checkGoogle();
+  }, [handleCredentialResponse]);
+
+  const login = () => {
+// FIX: Environment variables in Create React App must be prefixed with REACT_APP_.
+    if (!isGoogleReady || !process.env.REACT_APP_GOOGLE_CLIENT_ID) {
+        toast.error("Google Sign-In is not configured or ready yet.");
+        return;
+    }
+    window.google.accounts.id.prompt();
+  };
+  
   const logout = () => {
-    if (demoTimerRef.current) {
-        clearTimeout(demoTimerRef.current);
-        demoTimerRef.current = null;
+    if (window.google && window.google.accounts) {
+        window.google.accounts.id.disableAutoSelect();
     }
     setUser(null);
     sessionStorage.removeItem(CURRENT_USER_EMAIL_KEY);
+    sessionStorage.removeItem('smt-id-token');
   };
   
-  const signUp = (name: string, email: string): boolean => {
-      if (allUsers.some(u => u.email.toLowerCase() === email.toLowerCase())) {
-          toast.error("An account with this email already exists.");
-          return false;
-      }
-      
-      const newUser: User = {
-          name,
-          email,
-          avatarInitial: name.charAt(0).toUpperCase(),
-          tier: SubscriptionTier.FREE,
-          points: 100,
-          memberSince: new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
-          lastLogin: '',
-          projects: []
-      };
-      
-      setAllUsers(prev => [...prev, newUser]);
-      const finalUser = processDailyPoints(newUser);
-      setUser(finalUser);
-      sessionStorage.setItem(CURRENT_USER_EMAIL_KEY, finalUser.email);
-      return true;
-  };
-  
-  const createUser = (newUser: Omit<User, 'projects' | 'memberSince' | 'avatarInitial'>): boolean => {
+  const createUser = (newUser: Omit<User, 'projects' | 'memberSince' | 'avatarInitial' | 'playlists'>): boolean => {
       if (allUsers.some(u => u.email.toLowerCase() === newUser.email.toLowerCase())) {
           toast.error("An account with this email already exists.");
           return false;
@@ -188,6 +249,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           avatarInitial: newUser.name.charAt(0).toUpperCase(),
           memberSince: new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
           projects: [],
+          playlists: [],
       };
       setAllUsers(prev => [...prev, userToAdd]);
       return true;
@@ -200,7 +262,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setAllUsers(prev => prev.filter(u => u.email !== email));
   };
 
-
   const addUserProject = (project: UserProject) => {
     if (!user) {
         toast.error("You must be logged in to save projects.");
@@ -212,6 +273,34 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     };
     updateUser(updatedUser);
     toast.success(`'${project.title}' saved to My Projects!`);
+  };
+
+  const createUserPlaylist = (title: string, description: string) => {
+    if (!user) {
+      toast.error("You must be logged in to create a playlist.");
+      return;
+    }
+    const newPlaylist: UserPlaylist = { id: `user_pl_${Date.now()}`, title, description, trackIds: [] };
+    const updatedUser = { ...user, playlists: [...(user.playlists || []), newPlaylist] };
+    updateUser(updatedUser);
+    toast.success(`Playlist "${title}" created!`);
+  };
+
+  const deleteUserPlaylist = (playlistId: string) => {
+    if (!user) return;
+    const updatedPlaylists = (user.playlists || []).filter(p => p.id !== playlistId);
+    const updatedUser = { ...user, playlists: updatedPlaylists };
+    updateUser(updatedUser);
+    toast.success("Playlist deleted.");
+  };
+
+  const updateUserPlaylist = (playlistId: string, updates: Partial<UserPlaylist>) => {
+    if (!user) return;
+    const updatedPlaylists = (user.playlists || []).map(p =>
+      p.id === playlistId ? { ...p, ...updates } : p
+    );
+    const updatedUser = { ...user, playlists: updatedPlaylists };
+    updateUser(updatedUser);
   };
   
   const adminLogin = (password: string): boolean => {
@@ -238,7 +327,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }
 
   return (
-    <AuthContext.Provider value={{ user, allUsers, login, logout, signUp, createUser, updateUser, deleteUser, addUserProject, isAdmin, adminLogin, adminLogout, changeAdminPassword }}>
+    <AuthContext.Provider value={{ user, allUsers, login, logout, createUser, updateUser, deleteUser, addUserProject, isAdmin, adminLogin, adminLogout, changeAdminPassword, isGoogleReady, createUserPlaylist, deleteUserPlaylist, updateUserPlaylist }}>
       {children}
     </AuthContext.Provider>
   );

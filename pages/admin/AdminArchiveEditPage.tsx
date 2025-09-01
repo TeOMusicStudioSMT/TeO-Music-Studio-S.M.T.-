@@ -1,6 +1,7 @@
 
+
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import * as ReactRouterDOM from 'react-router-dom';
 import { useContent } from '../../hooks/useContent';
 import { GalleryImage } from '../../types';
 import toast from 'react-hot-toast';
@@ -9,8 +10,8 @@ import ImageGenerationInput from '../../components/admin/ImageGenerationInput';
 import TextGenerationInput from '../../components/admin/TextGenerationInput';
 
 const AdminGalleryEditPage: React.FC = () => {
-  const { archiveIndex } = useParams<{ archiveIndex: string }>();
-  const navigate = useNavigate();
+  const { archiveIndex } = ReactRouterDOM.useParams<{ archiveIndex: string }>();
+  const navigate = ReactRouterDOM.useNavigate();
   const { galleryImages, addGalleryImage, updateGalleryImage } = useContent();
   
   const isEditing = archiveIndex !== undefined;

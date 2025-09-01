@@ -1,13 +1,13 @@
 
 import React from 'react';
-import { Link } from 'react-router-dom';
+import * as ReactRouterDOM from 'react-router-dom';
 import { MusicNoteIcon, GlobeIcon, YoutubeIcon, HeartIcon } from './icons';
 import { useContent } from '../hooks/useContent';
 import { FooterContactItem, FooterLinkItem } from '../types';
 
 const FooterLink: React.FC<{ item: FooterLinkItem }> = ({ item }) => (
     <li>
-        <Link to={item.url} className="text-brand-text-secondary hover:text-white transition-colors duration-200">{item.label}</Link>
+        <ReactRouterDOM.Link to={item.url} className="text-brand-text-secondary hover:text-white transition-colors duration-200">{item.label}</ReactRouterDOM.Link>
     </li>
 );
 
@@ -37,13 +37,13 @@ const Footer: React.FC = () => {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="space-y-4">
-            <Link to="/" className="flex items-center space-x-3">
+            <ReactRouterDOM.Link to="/" className="flex items-center space-x-3">
                 <MusicNoteIcon className="w-8 h-8 text-brand-primary" />
                 <div>
                   <span className="text-xl font-bold text-white">TeO Music Studio</span>
                   <p className="text-xs text-brand-text-secondary">S.M.T.</p>
                 </div>
-            </Link>
+            </ReactRouterDOM.Link>
             <p className="text-brand-text-secondary text-sm">
                 {footerContent.description}
             </p>

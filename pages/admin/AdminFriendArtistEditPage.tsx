@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import * as ReactRouterDOM from 'react-router-dom';
 import { useContent } from '../../hooks/useContent';
 import { FriendArtist } from '../../types';
 import toast from 'react-hot-toast';
@@ -9,8 +8,8 @@ import ImageGenerationInput from '../../components/admin/ImageGenerationInput';
 import TextGenerationInput from '../../components/admin/TextGenerationInput';
 
 const AdminFriendArtistEditPage: React.FC = () => {
-  const { friendId } = useParams<{ friendId: string }>();
-  const navigate = useNavigate();
+  const { friendId } = ReactRouterDOM.useParams<{ friendId: string }>();
+  const navigate = ReactRouterDOM.useNavigate();
   const { friendArtists, addFriendArtist, updateFriendArtist } = useContent();
   
   const isEditing = friendId !== undefined;

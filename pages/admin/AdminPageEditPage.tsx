@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import * as ReactRouterDOM from 'react-router-dom';
 import { useContent } from '../../hooks/useContent';
 import { PageID } from '../../types';
 import toast from 'react-hot-toast';
 import NotFoundPage from '../NotFoundPage';
 
 const AdminPageEditPage: React.FC = () => {
-  const { pageId } = useParams<{ pageId: string }>();
-  const navigate = useNavigate();
+  const { pageId } = ReactRouterDOM.useParams<{ pageId: string }>();
+  const navigate = ReactRouterDOM.useNavigate();
   const { pageContents, updatePageContent } = useContent();
   
   const [content, setContent] = useState<string | null>(null);

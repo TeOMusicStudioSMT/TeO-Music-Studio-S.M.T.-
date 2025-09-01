@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import * as ReactRouterDOM from 'react-router-dom';
 import { useContent } from '../../hooks/useContent';
 import { Playlist, PlaylistCategory } from '../../types';
 import toast from 'react-hot-toast';
@@ -9,8 +8,8 @@ import ImageGenerationInput from '../../components/admin/ImageGenerationInput';
 import TextGenerationInput from '../../components/admin/TextGenerationInput';
 
 const AdminPlaylistEditPage: React.FC = () => {
-  const { playlistId } = useParams<{ playlistId: string }>();
-  const navigate = useNavigate();
+  const { playlistId } = ReactRouterDOM.useParams<{ playlistId: string }>();
+  const navigate = ReactRouterDOM.useNavigate();
   const { playlists, addPlaylist, updatePlaylist, artists } = useContent();
   
   const isEditing = playlistId !== undefined;

@@ -1,19 +1,62 @@
+
 import React, { useState } from 'react';
-import { SparklesIcon, XIcon } from '../icons';
+import { SparklesIcon, XIcon, ImageIcon, MusicNoteIcon } from '../icons';
 import { generateImage } from '../../services/geminiService';
 import toast from 'react-hot-toast';
+import { useContent } from '../../hooks/useContent';
+import { AssetType } from '../../types';
 
-interface ImageGenerationInputProps {
-    value: string;
-    onValueChange: (newValue: string) => void;
-    placeholder?: string;
-    inputClassName?: string;
+interface AssetPickerModalProps {
+    onClose: () => void;
+    onAssetSelect: (url: string) => void;
+    assetType: AssetType;
 }
 
-const ImageGenerationModal: React.FC<{
+const AssetPickerModal: React.FC<AssetPickerModalProps> = ({ onClose, onAssetSelect, assetType }) => {
+    const { assetVault } = useContent();
+    const filteredAssets = assetVault.filter(a => a.type === assetType);
+
+    const handleSelect = (url: string) => {
+        onAssetSelect(url);
+        onClose();
+    };
+
+    return (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[101] flex items-center justify-center p-4">
+            <div className="bg-brand-bg rounded-xl shadow-2xl w-full max-w-3xl p-6 relative">
+                 <button onClick={onClose} className="absolute top-4 right-4 text-brand-text-secondary hover:text-white"><XIcon/></button>
+                <h3 className="text-xl font-bold text-white mb-4">Select {assetType} from Vault</h3>
+                {filteredAssets.length > 0 ? (
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-h-96 overflow-y-auto">
+                        {filteredAssets.map(asset => (
+                            <div key={asset.id} onClick={() => handleSelect(asset.url)} className="cursor-pointer bg-brand-surface p-3 rounded-lg text-center hover:bg-brand-primary transition-colors group">
+                                {assetType === AssetType.IMAGE && (
+                                    <img src={asset.url} alt={asset.name} className="w-full h-24 object-cover rounded-md mb-2"/>
+                                )}
+                                {assetType === AssetType.AUDIO && (
+                                    <div className="w-full h-24 bg-brand-dark rounded-md mb-2 flex items-center justify-center">
+                                        <MusicNoteIcon className="w-10 h-10 text-brand-primary"/>
+                                    </div>
+                                )}
+                                <p className="text-xs text-white truncate group-hover:text-white">{asset.name}</p>
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <p className="text-brand-text-secondary text-center py-8">No {assetType.toLowerCase()} assets found in the vault.</p>
+                )}
+            </div>
+        </div>
+    );
+};
+
+
+interface ImageGenerationModalProps {
     onClose: () => void;
     onImageSelect: (imageUrl: string) => void;
-}> = ({ onClose, onImageSelect }) => {
+}
+
+const ImageGenerationModal: React.FC<ImageGenerationModalProps> = ({ onClose, onImageSelect }) => {
     const [prompt, setPrompt] = useState('');
     const [isGenerating, setIsGenerating] = useState(false);
     const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
@@ -105,10 +148,19 @@ const ImageGenerationModal: React.FC<{
 };
 
 
-export const ImageGenerationInput: React.FC<ImageGenerationInputProps> = ({ value, onValueChange, placeholder, inputClassName }) => {
-    const [isModalOpen, setIsModalOpen] = useState(false);
+interface ImageGenerationInputProps {
+    value: string;
+    onValueChange: (newValue: string) => void;
+    placeholder?: string;
+    inputClassName?: string;
+    assetType?: AssetType;
+}
 
-    const defaultClasses = "w-full bg-brand-surface rounded-lg px-4 py-3 pr-12 text-white focus:outline-none focus:ring-2 focus:ring-brand-primary";
+export const ImageGenerationInput: React.FC<ImageGenerationInputProps> = ({ value, onValueChange, placeholder, inputClassName, assetType = AssetType.IMAGE }) => {
+    const [isGenerateModalOpen, setIsGenerateModalOpen] = useState(false);
+    const [isVaultModalOpen, setIsVaultModalOpen] = useState(false);
+
+    const defaultClasses = "w-full bg-brand-surface rounded-lg px-4 py-3 pr-20 text-white focus:outline-none focus:ring-2 focus:ring-brand-primary";
 
     return (
         <div className="relative">
@@ -119,18 +171,38 @@ export const ImageGenerationInput: React.FC<ImageGenerationInputProps> = ({ valu
                 placeholder={placeholder}
                 className={inputClassName || defaultClasses}
             />
-            <button
-                type="button"
-                onClick={() => setIsModalOpen(true)}
-                className="absolute inset-y-0 right-0 px-3 flex items-center text-brand-primary hover:text-brand-accent transition-colors"
-                title="Generate image with AI"
-            >
-                <SparklesIcon className="w-5 h-5" />
-            </button>
-            {isModalOpen && (
+            <div className="absolute inset-y-0 right-0 px-2 flex items-center gap-1">
+                 <button
+                    type="button"
+                    onClick={() => setIsVaultModalOpen(true)}
+                    className="p-2 text-brand-text-secondary hover:text-white transition-colors"
+                    title="Select from Asset Vault"
+                >
+                    <ImageIcon className="w-5 h-5" />
+                </button>
+                {assetType === AssetType.IMAGE && (
+                     <button
+                        type="button"
+                        onClick={() => setIsGenerateModalOpen(true)}
+                        className="text-brand-primary hover:text-brand-accent transition-colors p-2"
+                        title="Generate image with AI"
+                    >
+                        <SparklesIcon className="w-5 h-5" />
+                    </button>
+                )}
+            </div>
+
+            {isGenerateModalOpen && assetType === AssetType.IMAGE && (
                 <ImageGenerationModal
-                    onClose={() => setIsModalOpen(false)}
+                    onClose={() => setIsGenerateModalOpen(false)}
                     onImageSelect={onValueChange}
+                />
+            )}
+            {isVaultModalOpen && (
+                 <AssetPickerModal
+                    onClose={() => setIsVaultModalOpen(false)}
+                    onAssetSelect={onValueChange}
+                    assetType={assetType}
                 />
             )}
         </div>
